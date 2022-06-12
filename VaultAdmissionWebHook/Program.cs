@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.HttpLogging;
 using VaultAdmissionWebHook.Options;
 
@@ -15,6 +16,19 @@ builder.Services.AddHttpLogging(logging =>
 });
 
 builder.Services.AddHttpClient();
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ConfigureHttpsDefaults(httpsOptions =>
+    {
+        var certPath = builder.Configuration.GetValue<string>("TlsCertPath");
+        var keyPath = builder.Configuration.GetValue<string>("TlsKeyPath");
+        // var certPath = Path.Combine(builder.Environment.ContentRootPath, "cert", "tls.crt");
+        // var keyPath = Path.Combine(builder.Environment.ContentRootPath, "cert", "tls.key");
+
+        httpsOptions.ServerCertificate = X509Certificate2.CreateFromPemFile(certPath, keyPath);
+    });
+});
 
 // builder.WebHost.ConfigureKestrel(options =>
 // {
