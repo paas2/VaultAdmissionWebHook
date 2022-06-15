@@ -26,7 +26,11 @@ public class ValidationWebHookController : ControllerBase
         _logger = logger;
         _httpClientFactory = httpClientFactory;
 
-        IAuthMethodInfo authMethod = new KubernetesAuthMethodInfo(options.Value.Vault.RoleName, options.Value.Vault.Token);
+        var authMethod = 
+            string.IsNullOrEmpty(options.Value.Vault.AuthMountPoint) ? 
+                new KubernetesAuthMethodInfo(options.Value.Vault.RoleName, options.Value.Vault.Token) : 
+                new KubernetesAuthMethodInfo(options.Value.Vault.AuthMountPoint, options.Value.Vault.RoleName, options.Value.Vault.Token);
+        
         var vaultClientSettings = new VaultClientSettings(options.Value.Vault.Server, authMethod);
 
         _vaultClient = new VaultClient(vaultClientSettings);
