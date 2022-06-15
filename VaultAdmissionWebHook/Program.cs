@@ -30,17 +30,6 @@ builder.WebHost.ConfigureKestrel(options =>
     });
 });
 
-// builder.WebHost.ConfigureKestrel(options =>
-// {
-//     options.ConfigureHttpsDefaults(httpsOptions =>
-//     {
-//         var certPath = Path.Combine(builder.Environment.ContentRootPath, "cert", "tls.crt");
-//         var keyPath = Path.Combine(builder.Environment.ContentRootPath, "cert", "tls.key");
-//
-//         httpsOptions.ServerCertificate = X509Certificate2.CreateFromPemFile(certPath, keyPath);
-//     });
-// });
-
 // Add services to the container.
 builder.Services.Configure<VOptions>(builder.Configuration);
 
@@ -48,6 +37,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -65,5 +55,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

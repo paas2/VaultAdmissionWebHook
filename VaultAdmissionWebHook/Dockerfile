@@ -15,8 +15,8 @@ COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "VaultAdmissionWebHook.dll"]
 
 # eval $(minikube -p minikube docker-env)
-# docker build -t canpolatoral/vault-admission-webhook:0.4 .
+# docker build -t canpolatoral/vault-admission-webhook:0.5 .
 # docker build -t canpolatoral/vault-admission-webhook .
 
-# docker push canpolatoral/vault-admission-webhook:0.4
+# docker push canpolatoral/vault-admission-webhook:0.5
 # docker push canpolatoral/vault-admission-webhook
