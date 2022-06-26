@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using VaultAdmissionWebHook.Models;
 using VaultAdmissionWebHook.Options;
 using VaultSharp;
-using VaultSharp.V1.AuthMethods;
 using VaultSharp.V1.AuthMethods.Kubernetes;
 using VaultSharp.V1.SystemBackend;
 
@@ -20,11 +19,13 @@ public class ValidationWebHookController : ControllerBase
     private readonly ILogger<ValidationWebHookController> _logger;
     private readonly VaultClient _vaultClient;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IOptions<VOptions> _options;
 
     public ValidationWebHookController(ILogger<ValidationWebHookController> logger, IOptions<VOptions> options, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _options = options;
 
         var authMethod = 
             string.IsNullOrEmpty(options.Value.Vault.AuthMountPoint) ? 
@@ -78,7 +79,7 @@ public class ValidationWebHookController : ControllerBase
         {
             var policy = new ACLPolicy
             {
-                Name = $"{request.Name}-{accessDefinition.ServiceAccountName}-{accessDefinition.ServiceAccountNamespace}",
+                Name = $"{_options.Value.SahabEnvironment}-{request.Name}-{accessDefinition.ServiceAccountName}-{accessDefinition.ServiceAccountNamespace}",
                 Policy = $"path \"{accessDefinition.SecretPath}\" {{capabilities = [\"read\"]}}"
             };
 
@@ -92,7 +93,7 @@ public class ValidationWebHookController : ControllerBase
 
     private async Task CreateAppRole(string serviceAccountName, string serviceAccountNamespace, string policyName)
     {
-        var uri = $"{_vaultClient.Settings.VaultServerUriWithPort}/v1/auth/kubernetes/role/{serviceAccountName}-{serviceAccountNamespace}";
+        var uri = $"{_vaultClient.Settings.VaultServerUriWithPort}/v1/auth/{_options.Value.Vault.AuthMountPoint}/role/{serviceAccountName}-{serviceAccountNamespace}";
         var tokenInfo = await _vaultClient.V1.Auth.Token.LookupSelfAsync();
 
         var kubernetesRoleRequest = new KubernetesRoleRequest()
@@ -128,7 +129,7 @@ public class ValidationWebHookController : ControllerBase
         
         foreach (var accessDefinition in oldObject.Spec.AccessDefinitions)
         {
-            var name = $"{request.Name}-{accessDefinition.ServiceAccountName}-{accessDefinition.ServiceAccountNamespace}";
+            var name = $"{_options.Value.SahabEnvironment}-{request.Name}-{accessDefinition.ServiceAccountName}-{accessDefinition.ServiceAccountNamespace}";
             
             // delete read policy
             await _vaultClient.V1.System.DeleteACLPolicyAsync(name);
@@ -140,7 +141,7 @@ public class ValidationWebHookController : ControllerBase
     
     private async Task DeleteAppRole(string serviceAccountName, string serviceAccountNamespace, string policyName)
     {
-        var uri = $"{_vaultClient.Settings.VaultServerUriWithPort}/v1/auth/kubernetes/role/{serviceAccountName}-{serviceAccountNamespace}";
+        var uri = $"{_vaultClient.Settings.VaultServerUriWithPort}/v1/auth/{_options.Value.Vault.AuthMountPoint}/role/{serviceAccountName}-{serviceAccountNamespace}";
         var tokenInfo = await _vaultClient.V1.Auth.Token.LookupSelfAsync();
 
         var httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, uri)
